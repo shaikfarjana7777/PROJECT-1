@@ -54,7 +54,6 @@ def ocr():
         'address': address,
         'dob': dob
     }
-
     return jsonify(response_data)
 
 if __name__ == '__main__':
