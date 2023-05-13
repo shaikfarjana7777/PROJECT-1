@@ -1,0 +1,56 @@
+import os
+import time
+import urllib.request
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
+import mysql.connector
+from datetime import datetime
+mydb = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  password="aspen123",
+  database="student"
+)
+mycursor = mydb.cursor()
+
+url = 'https://www.flipkart.com/search?q=dell+laptops'
+
+driver = webdriver.Chrome()
+driver.get(url)
+time.sleep(5)
+
+folder_path = '/home/farjana/newflipkart_images'
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+
+for i in range(1, 3):
+    time.sleep(5)
+
+    html = driver.page_source
+
+    soup = BeautifulSoup(html, 'html.parser')
+    image_tags = soup.find_all('img', {'src': lambda x: x.startswith('https://rukminim1.flixcart.com/image/312/312/')})
+    name_tags = soup.find_all('div', {'class': '_4rR01T'})
+
+    for j, img in enumerate(image_tags):
+        img_url = img['src']
+        img_name = f'dell_laptop{(i-1)*len(image_tags)+j}.jpg'
+        img_path = os.path.join(folder_path, img_name)
+        urllib.request.urlretrieve(img_url, img_path)
+        #print(f'Saved {img_name} to disk')
+
+        if j < len(name_tags):
+            name = name_tags[j].text.strip()
+            image_files = f'Saved {name} to database'
+            #image_files="saved {name} to database"
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            sql = "INSERT INTO flipkart_images (image_files, url, image_name, timestamp) VALUES (%s, %s, %s, %s)"
+            val = (image_files, img_url, name, timestamp)
+            mycursor.execute(sql, val)
+            mydb.commit()
+            print(image_files)
+    next_button = driver.find_element(By.XPATH, f'//a[text()="{i+1}"]')
+    driver.execute_script("arguments[0].click();", next_button)
+
+driver.quit()
