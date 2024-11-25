@@ -32,7 +32,7 @@ def ocr():
     if aadhaar_match:
         aadhaar_number = aadhaar_match.group(0)
     else:
-        aadhaar_number = "No Aadhaar number found."
+        aadhaar_number = "No Aadhaar number found in the id."
 
     if name_match:
         name = name_match.group(1)
